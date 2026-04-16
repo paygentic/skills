@@ -1,0 +1,12 @@
+{
+  "name": "paygentic-ai-skills",
+  "owner": { "name": "Paygentic" },
+  "plugins": [
+    {
+      "name": "paygentic",
+      "source": "./plugins/paygentic",
+      "description": "Skills for evaluating and integrating Paygentic billing",
+      "version": "0.1.0"
+    }
+  ]
+}
