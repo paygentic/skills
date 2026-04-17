@@ -61,7 +61,7 @@ Paygentic has two layers: things you set up once (catalog), and things your code
 
 ### Catalog (configured in the Paygentic dashboard)
 
-Set these up in the UI at [app.paygentic.com](https://app.paygentic.com) — no code needed:
+Set these up in the UI at [platform.paygentic.io](https://platform.paygentic.io) — no code needed:
 
 - **Products** — what you sell (e.g., "API Platform", "Pro Tier")
 - **Features** — capabilities within a product (e.g., "image-generation", "priority-support"). Can be boolean (on/off) or metered (has a balance).
@@ -74,7 +74,7 @@ Set these up in the UI at [app.paygentic.com](https://app.paygentic.com) — no 
 These operations happen in your application and require SDK integration:
 
 - **Customers** — create and sync customers from your user model
-- **Subscriptions** — subscribe customers to plans, manage lifecycle (create, terminate, renew)
+- **Subscriptions** — subscribe customers to plans, manage lifecycle (create, terminate)
 - **Meter Events** — send usage data via `events.ingest()` (fire-and-forget, CloudEvents format)
 - **Entitlements** — check if a customer can access a feature and track their balance ("does user X have credits left?")
 - **Grants** — allocate credits/quota to customers (e.g., "1000 API calls included per month"). Auto-issued from plans, with reset periods and optional rollover.
@@ -124,12 +124,12 @@ Both are generated from the OpenAPI spec via Speakeasy and stay in sync with the
 
 ## Learn More
 
-- [Quickstart guide](https://docs.paygentic.com/getting-started/quickstart)
-- [API reference](https://docs.paygentic.com/api-reference)
-- [Billing concepts](https://docs.paygentic.com/platform/billing)
-- [Metering guide](https://docs.paygentic.com/platform/metering)
-- [Entitlements](https://docs.paygentic.com/platform/billing/entitlements)
-- [Pricing models](https://docs.paygentic.com/platform/pricing)
+- [Quickstart guide](https://docs.paygentic.io/getting-started/quickstart)
+- [API reference](https://docs.paygentic.io/api-reference)
+- [Billing concepts](https://docs.paygentic.io/platform/billing)
+- [Metering guide](https://docs.paygentic.io/platform/metering)
+- [Entitlements](https://docs.paygentic.io/platform/billing/entitlements)
+- [Pricing models](https://docs.paygentic.io/platform/pricing)
 
 ## Ready to Code?
 

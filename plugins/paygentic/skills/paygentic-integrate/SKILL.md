@@ -19,7 +19,7 @@ Write SDK integration code for merchant developers. Detect their language, under
 Before writing any code, determine:
 
 1. **Setup state** — Do they have an API key and SDK installed?
-   - No API key → direct them to [app.paygentic.com](https://app.paygentic.com) to create one
+   - No API key → direct them to [platform.paygentic.io](https://platform.paygentic.io) to create one
    - No SDK → show install command (see SDK Setup below)
    - Ready → proceed to their requested operation
 
@@ -271,6 +271,7 @@ await paygentic.entitlements.issue({
 
 Invoices are auto-generated from subscriptions. You can read them and add manual line items.
 
+### TypeScript
 ```typescript
 // List invoices for a subscription
 const invoices = await paygentic.invoicesV2.list({
@@ -292,10 +293,33 @@ await paygentic.invoicesV2.createLineItem({
 });
 ```
 
+### Python
+```python
+# List invoices for a subscription
+invoices = paygentic.invoices_v2.list(
+    subscription_id="sub_abc123",
+)
+
+# Get a specific invoice with line items
+invoice = paygentic.invoices_v2.get(
+    id="inv_abc123",
+    expand="lineItems",
+)
+
+# Add a manual line item (ad-hoc charge or credit)
+paygentic.invoices_v2.create_line_item(
+    invoice_id="inv_abc123",
+    description="Custom consulting fee",
+    amount="250.00",
+    currency="USD",
+)
+```
+
 ## Payments (P1)
 
 Create one-off payment charges. Returns a checkout URL the customer visits to pay.
 
+### TypeScript
 ```typescript
 const payment = await paygentic.payments.create({
   amount: "99.00",
@@ -309,6 +333,22 @@ const payment = await paygentic.payments.create({
   ],
 });
 // payment.checkoutUrl — redirect customer here to complete payment
+```
+
+### Python
+```python
+payment = paygentic.payments.create(
+    amount="99.00",
+    currency="USD",
+    customer_id="customer_abc123",
+    reference="onboarding-fee",
+    success_redirect_url="https://myapp.com/payment/success",
+    failure_redirect_url="https://myapp.com/payment/failed",
+    line_items=[
+        {"description": "Onboarding fee", "amount": "99.00"},
+    ],
+)
+# payment.checkout_url — redirect customer here to complete payment
 ```
 
 ## Additional Domains (P2 — Available, Expand Later)
@@ -332,7 +372,7 @@ These are available in the SDK but covered lightly here. Ask if the developer ne
 
 ## Learn More
 
-- [API reference](https://docs.paygentic.com/api-reference)
-- [Metering guide](https://docs.paygentic.com/platform/metering)
-- [Subscription lifecycle](https://docs.paygentic.com/platform/billing)
-- [Entitlements](https://docs.paygentic.com/platform/billing/entitlements)
+- [API reference](https://docs.paygentic.io/api-reference)
+- [Metering guide](https://docs.paygentic.io/platform/metering)
+- [Billing concepts](https://docs.paygentic.io/platform/billing)
+- [Entitlements](https://docs.paygentic.io/platform/billing/entitlements)

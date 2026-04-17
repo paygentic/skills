@@ -136,6 +136,41 @@ await paygentic.billableMetrics.meter({
 });
 ```
 
+### entitlements.grants.create()
+```typescript
+await paygentic.entitlements.grants.create({
+  entitlementId: string,           // required
+  amount: number,                  // units to grant
+  metadata?: Record<string, string>,
+});
+```
+
+### entitlements.grants.purchase()
+```typescript
+await paygentic.entitlements.grants.purchase({
+  entitlementId: string,           // required
+  amount: number,                  // units to purchase
+});
+// Returns: Grant with ad-hoc invoice and payment session
+```
+
+### entitlements.grants.list()
+```typescript
+await paygentic.entitlements.grants.list({
+  entitlementId: string,           // required
+  limit?: number,
+  offset?: number,
+});
+```
+
+### entitlements.grants.void()
+```typescript
+await paygentic.entitlements.grants.void({
+  entitlementId: string,           // required
+  grantId: string,                 // required
+});
+```
+
 ### invoicesV2.list() / invoicesV2.get()
 ```typescript
 await paygentic.invoicesV2.list({
@@ -149,6 +184,17 @@ await paygentic.invoicesV2.get({
   expand?: string,               // e.g., "lineItems"
   lineItemsLimit?: number,       // default: 100
   lineItemsPageToken?: string,
+});
+```
+
+### invoicesV2.createLineItem()
+```typescript
+await paygentic.invoicesV2.createLineItem({
+  invoiceId: string,               // required
+  description: string,             // line item description
+  amount: string,                  // decimal string e.g. "250.00"
+  currency?: string,               // e.g. "USD"
+  quantity?: number,
 });
 ```
 

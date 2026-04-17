@@ -138,6 +138,40 @@ usage = paygentic.billable_metrics.meter(
 )
 ```
 
+### entitlements.grants.create()
+```python
+paygentic.entitlements.grants.create(
+    entitlement_id="ent_abc123",
+    amount=500,                      # units to grant
+)
+```
+
+### entitlements.grants.purchase()
+```python
+purchase = paygentic.entitlements.grants.purchase(
+    entitlement_id="ent_abc123",
+    amount=1000,                     # units to purchase
+)
+# purchase — creates ad-hoc invoice with payment session
+```
+
+### entitlements.grants.list()
+```python
+grants = paygentic.entitlements.grants.list(
+    entitlement_id="ent_abc123",
+    limit=10,
+    offset=0,
+)
+```
+
+### entitlements.grants.void()
+```python
+paygentic.entitlements.grants.void(
+    entitlement_id="ent_abc123",
+    grant_id="grant_abc123",
+)
+```
+
 ### invoices_v2.list() / invoices_v2.get()
 ```python
 invoices = paygentic.invoices_v2.list()
@@ -145,6 +179,16 @@ invoices = paygentic.invoices_v2.list()
 invoice = paygentic.invoices_v2.get(
     id="inv_abc123",
     expand="lineItems",
+)
+```
+
+### invoices_v2.create_line_item()
+```python
+paygentic.invoices_v2.create_line_item(
+    invoice_id="inv_abc123",
+    description="Custom consulting fee",
+    amount="250.00",
+    currency="USD",
 )
 ```
 
