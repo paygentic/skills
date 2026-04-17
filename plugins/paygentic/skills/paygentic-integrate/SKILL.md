@@ -19,7 +19,7 @@ Write SDK integration code for merchant developers. Detect their language, under
 Before writing any code, determine:
 
 1. **Setup state** — Do they have an API key and SDK installed?
-   - No API key → direct them to [platform.paygentic.io](https://platform.paygentic.io) to create one
+   - No API key → direct them to [platform.sandbox.paygentic.io](https://platform.sandbox.paygentic.io/merchant/developer/apikeys) to create one
    - No SDK → show install command (see SDK Setup below)
    - Ready → proceed to their requested operation
 
@@ -30,13 +30,73 @@ Before writing any code, determine:
 
 3. **What they want to do** — metering, customers, subscriptions, entitlements, invoices, or payments
 
+4. **Environment** — Always start with sandbox.
+   - Initial integrations MUST target the **sandbox** environment (`https://api.sandbox.paygentic.io`)
+   - Sandbox dashboard: [platform.sandbox.paygentic.io](https://platform.sandbox.paygentic.io)
+   - When the developer is ready for production, the only changes needed are:
+     1. Update the server URL to `https://api.paygentic.io`
+     2. Swap the sandbox API key for a production API key
+   - If a developer mentions "production" or "go live", remind them of these two changes
+
 If the developer's message already makes context obvious, skip questions and proceed.
 
 After determining the language, read the appropriate reference file for SDK-specific patterns:
 - TypeScript: `references/typescript-sdk.md`
 - Python: `references/python-sdk.md`
 
+## Debugging with the Live API
+
+**When in doubt, check the API reference and make direct calls.** Don't guess at IDs, field names, or configuration — verify by hitting the API.
+
+### API Reference
+The full API reference is at [docs.paygentic.io/api-reference](https://docs.paygentic.io/api-reference). Use `WebFetch` to look up endpoint details when unsure about parameters, request/response shapes, or available query filters.
+
+### Direct API Calls
+When debugging or verifying setup, make `curl` calls directly in the terminal. This is faster than writing SDK code for one-off checks.
+
+**Base URL (sandbox):** `https://api.sandbox.paygentic.io/v0`
+
+Common debugging calls:
+```bash
+# List billable metrics — verify event types are configured
+curl -s "https://api.sandbox.paygentic.io/v0/billableMetrics?merchantId={MERCHANT_ID}" \
+  -H "Authorization: Bearer $PAYGENTIC_BEARER_AUTH" | jq
+
+# List customers — verify customer was created
+curl -s "https://api.sandbox.paygentic.io/v0/customers?merchantId={MERCHANT_ID}" \
+  -H "Authorization: Bearer $PAYGENTIC_BEARER_AUTH" | jq
+
+# Get a specific subscription
+curl -s "https://api.sandbox.paygentic.io/v0/subscriptions/{SUBSCRIPTION_ID}" \
+  -H "Authorization: Bearer $PAYGENTIC_BEARER_AUTH" | jq
+
+# List plans — verify plan IDs
+curl -s "https://api.sandbox.paygentic.io/v0/plans?merchantId={MERCHANT_ID}" \
+  -H "Authorization: Bearer $PAYGENTIC_BEARER_AUTH" | jq
+
+# List entitlements for a customer
+curl -s "https://api.sandbox.paygentic.io/v0/entitlements?customerId={CUSTOMER_ID}" \
+  -H "Authorization: Bearer $PAYGENTIC_BEARER_AUTH" | jq
+```
+
+### Ask for IDs
+Many debugging scenarios require IDs that only the developer can provide from their dashboard. **Proactively ask** for these when relevant:
+
+- **`merchantId`** — their organization ID (visible in dashboard settings)
+- **`billableMetricId`** — the metric they're trying to meter against
+- **`planId`** / **`productId`** — the plan or product they're subscribing customers to
+- **`customerId`** — the Paygentic customer ID (not their internal user ID)
+- **`subscriptionId`** — for debugging billing or entitlement issues
+
+Don't make the developer hunt for why something is silently failing — ask for the ID, hit the API, and show them the actual state.
+
+### When to Confirm with the User
+- **Read-only calls** (GET/list) — go ahead without asking
+- **Mutating calls** (POST/PUT/DELETE) — always confirm with the user first, explaining what the call will do
+
 ## SDK Setup
+
+**Always start with sandbox.** The only difference between sandbox and production is the `serverURL` and API key.
 
 ### TypeScript
 ```bash
@@ -45,9 +105,17 @@ npm install @paygentic/sdk
 ```typescript
 import { Paygentic } from "@paygentic/sdk";
 
+// Sandbox (default for initial integration)
 const paygentic = new Paygentic({
+  serverURL: "https://api.sandbox.paygentic.io",
   bearerAuth: process.env.PAYGENTIC_BEARER_AUTH,
 });
+
+// Production — switch when ready to go live:
+// const paygentic = new Paygentic({
+//   serverURL: "https://api.paygentic.io",
+//   bearerAuth: process.env.PAYGENTIC_BEARER_AUTH,
+// });
 ```
 
 ### Python
@@ -58,9 +126,17 @@ pip install paygentic-sdk
 import os
 from paygentic_sdk import Paygentic
 
+# Sandbox (default for initial integration)
 paygentic = Paygentic(
+    server_url="https://api.sandbox.paygentic.io",
     bearer_auth=os.getenv("PAYGENTIC_BEARER_AUTH", ""),
 )
+
+# Production — switch when ready to go live:
+# paygentic = Paygentic(
+#     server_url="https://api.paygentic.io",
+#     bearer_auth=os.getenv("PAYGENTIC_BEARER_AUTH", ""),
+# )
 ```
 
 Python supports both sync and async. Every method has an `_async` variant (e.g., `customers.create_async()`). Use `async with Paygentic(...) as paygentic:` for async context management.
@@ -355,20 +431,24 @@ payment = paygentic.payments.create(
 
 These are available in the SDK but covered lightly here. Ask if the developer needs help with any:
 
-- **Sources** — connect external data sources for automated usage ingestion with approval workflow (`sources.create()`, `sources.events.approve()`, `sources.rules.create()`)
-- **Disputes** — create disputes for contested usage events (`disputes.create()`, `disputes.list()`)
+
 - **Costs** — track infrastructure/operational costs against usage (`costs.createCost()`, `costs.getCostSummary()`)
+- **Sources** — connect external data sources for automated usage ingestion with approval workflow (`sources.create()`, `sources.events.approve()`, `sources.rules.create()`)
 - **Test Clocks** — simulate time for testing billing cycles (`testClocks.create()`, `testClocks.advance()`)
 
 ## Common Mistakes
 
 1. **Using v0 usage endpoints with v1 plans** — `usageEvents.create()` and `usageEvents.batchCreate()` will return an error for v1 billing subscriptions. Always use `events.ingest()`.
 
-2. **Expecting confirmation from ingest** — `events.ingest()` always returns 202 Accepted with no validation. If the event type doesn't match a metric, it's silently ignored. Verify metric configuration in the dashboard.
+2. **Expecting confirmation from ingest** — `events.ingest()` always returns 202 Accepted with no validation. If the event type doesn't match a metric, it's silently ignored. Verify metric configuration in the dashboard — or better, make a direct API call to list billable metrics and confirm the event type matches.
 
 3. **Missing idempotency** — For critical metering, pass `idempotencyKey` to `events.ingest()` to prevent duplicate charges on retries.
 
 4. **Not using the portal link** — Instead of building custom subscription management UI, use `subscriptions.generatePortalLink()` to give customers self-service access.
+
+5. **Integrating directly against production** — Always develop and test against sandbox first (`api.sandbox.paygentic.io`). Moving to production is just changing the `serverURL` and API key — no code changes needed.
+
+6. **Guessing at IDs instead of verifying** — When events aren't showing up or subscriptions fail, don't guess. Hit the API directly (`curl` the billable metrics, plans, or customers endpoint) to verify the IDs and configuration are correct.
 
 ## Learn More
 
