@@ -23,8 +23,8 @@ Instead of reading docs and writing boilerplate, describe what you need in natur
 ## Installation
 
 ```bash
-/plugin marketplace add paygentic/ai-skills
-/plugin install paygentic@paygentic-ai-skills
+/plugin marketplace add paygentic/skills
+/plugin install paygentic@paygentic-skills
 ```
 
 ## Requirements
@@ -53,8 +53,8 @@ Biggest impact: usage metering (eval 3) — without the skill, Claude defaults t
 ## Updating
 
 ```bash
-/plugin marketplace update paygentic-ai-skills
-/plugin update paygentic@paygentic-ai-skills
+/plugin marketplace update paygentic-skills
+/plugin update paygentic@paygentic-skills
 ```
 
 ## Resources

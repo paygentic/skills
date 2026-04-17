@@ -2,17 +2,19 @@
 name: paygentic-integrate
 description: >
   Use when a developer wants to integrate Paygentic into their application using
-  the SDK. Use this skill whenever someone wants to send usage events, create
-  customers, manage subscriptions, check entitlements, retrieve invoices, or set up
-  payments with Paygentic. Also use when someone says "set up billing", "add
-  metering", "wire up Paygentic", "integrate Paygentic", or has the @paygentic/sdk
-  or paygentic-sdk package installed. Even if they just say "I want to bill my
-  users" in a project that has Paygentic as a dependency, use this skill.
+  the SDK or raw REST API. Use this skill whenever someone wants to send usage
+  events, create customers, manage subscriptions, check entitlements, retrieve
+  invoices, or set up payments with Paygentic. Works with any language — TypeScript
+  and Python via SDK, all other languages via direct HTTP API. Also use when someone
+  says "set up billing", "add metering", "wire up Paygentic", "integrate Paygentic",
+  or has the @paygentic/sdk or paygentic-sdk package installed. Even if they just say
+  "I want to bill my users" in a project that has Paygentic as a dependency, use
+  this skill.
 ---
 
 # Paygentic Integrate
 
-Write SDK integration code for merchant developers. Detect their language, understand their setup state, and generate working code.
+Write integration code for merchant developers using the SDK (TypeScript, Python) or the raw REST API (any language). Detect their language, understand their setup state, and generate working code.
 
 ## First: Understand the Developer's Context
 
@@ -24,9 +26,10 @@ Before writing any code, determine:
    - Ready → proceed to their requested operation
 
 2. **Language** — Check the project for signals:
-   - `package.json` with `@paygentic/sdk` → TypeScript
-   - `requirements.txt` / `pyproject.toml` with `paygentic-sdk` → Python
-   - If unclear, ask which SDK they want to use
+   - `package.json` with `@paygentic/sdk` → TypeScript SDK
+   - `requirements.txt` / `pyproject.toml` with `paygentic-sdk` → Python SDK
+   - Go, Java, Ruby, Rust, PHP, or any other language → **Raw HTTP API** (no SDK needed)
+   - If unclear, ask which language they're using
 
 3. **What they want to do** — metering, customers, subscriptions, entitlements, invoices, or payments
 
@@ -40,9 +43,10 @@ Before writing any code, determine:
 
 If the developer's message already makes context obvious, skip questions and proceed.
 
-After determining the language, read the appropriate reference file for SDK-specific patterns:
-- TypeScript: `references/typescript-sdk.md`
-- Python: `references/python-sdk.md`
+After determining the language:
+- TypeScript → read `references/typescript-sdk.md`
+- Python → read `references/python-sdk.md`
+- Any other language → use the **Raw API Integration** section below. Generate idiomatic HTTP code in the developer's language (e.g., `net/http` for Go, `HttpClient` for Java, `reqwest` for Rust, `guzzle`/`curl` for PHP).
 
 ## Debugging with the Live API
 
@@ -140,6 +144,146 @@ paygentic = Paygentic(
 ```
 
 Python supports both sync and async. Every method has an `_async` variant (e.g., `customers.create_async()`). Use `async with Paygentic(...) as paygentic:` for async context management.
+
+## Raw API Integration (No SDK)
+
+For languages without an SDK (Go, Java, Ruby, Rust, PHP, etc.), integrate directly with the REST API. The SDKs are thin wrappers — every SDK method maps 1:1 to an HTTP endpoint.
+
+### Base URL & Auth
+
+```
+Base URL (sandbox): https://api.sandbox.paygentic.io/v0
+Base URL (production): https://api.paygentic.io/v0
+
+Header: Authorization: Bearer <API_KEY>
+Content-Type: application/json
+```
+
+**Note:** Most endpoints use `/v0`, but entitlements use `/v1`. This is called out in the examples below.
+
+### Ingest a Usage Event
+```
+POST /v0/events
+```
+```json
+{
+  "type": "api-call",
+  "source": "my-api-service",
+  "subject": "customer_abc123",
+  "data": {
+    "tokens": 1500,
+    "model": "gpt-4"
+  }
+}
+```
+Returns `202 Accepted` always — fire-and-forget. Optional fields: `namespace`, `timestamp` (ISO 8601), `idempotencyKey`.
+
+### Create a Customer
+```
+POST /v0/customers
+```
+```json
+{
+  "merchantId": "org_abc123",
+  "consumer": {
+    "name": "Acme Corp",
+    "email": "billing@acme.com",
+    "address": {
+      "line1": "123 Main St",
+      "city": "San Francisco",
+      "state": "CA",
+      "postalCode": "94105",
+      "country": "US"
+    }
+  },
+  "externalId": "acme-123"
+}
+```
+Returns `201 Created` with `{ "customerId": "cus_...", "validTaxAddress": { ... } }`. Use `consumerId` instead of `consumer` to reference an existing consumer.
+
+### Create a Subscription
+```
+POST /v0/subscriptions
+```
+```json
+{
+  "name": "Acme Pro Subscription",
+  "planId": "plan_pro_monthly",
+  "customerId": "cus_abc123",
+  "startedAt": "2026-04-17T00:00:00Z",
+  "autoCharge": true
+}
+```
+Returns `201 Created`. Optional fields: `endingAt`, `taxExempt`, `sessionExpiryMinutes`, `testClockId`, `redirectUrls`.
+
+### Check Entitlements
+```
+GET /v1/entitlements?customerId=cus_abc123&featureKey=api-calls
+```
+**Note the `/v1/` path** — entitlements are on v1, not v0.
+
+Returns:
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "hasAccess": true,
+      "featureKey": "api-calls",
+      "featureType": "metered",
+      "balance": 847,
+      "usageInPeriod": 153,
+      "status": "active"
+    }
+  ]
+}
+```
+
+### List Billable Metrics
+```
+GET /v0/billableMetrics?merchantId=org_abc123
+```
+
+### List Plans
+```
+GET /v0/plans?merchantId=org_abc123
+```
+
+### Terminate a Subscription
+```
+POST /v0/subscriptions/{id}/terminate
+```
+```json
+{
+  "reason": "Customer requested cancellation"
+}
+```
+
+### Generate Portal Link
+```
+POST /v0/subscriptions/{id}/portal-link
+```
+
+### Endpoint Pattern Reference
+
+| Operation | Method | Path |
+|-----------|--------|------|
+| Ingest event | `POST` | `/v0/events` |
+| List customers | `GET` | `/v0/customers?merchantId={id}` |
+| Create customer | `POST` | `/v0/customers` |
+| Get customer | `GET` | `/v0/customers/{id}` |
+| List subscriptions | `GET` | `/v0/subscriptions?merchantId={id}` |
+| Create subscription | `POST` | `/v0/subscriptions` |
+| Terminate subscription | `POST` | `/v0/subscriptions/{id}/terminate` |
+| Portal link | `POST` | `/v0/subscriptions/{id}/portal-link` |
+| List entitlements | `GET` | `/v1/entitlements?customerId={id}` |
+| List billable metrics | `GET` | `/v0/billableMetrics?merchantId={id}` |
+| Query meter usage | `GET` | `/v0/billableMetrics/{id}/meter` |
+| List plans | `GET` | `/v0/plans?merchantId={id}` |
+| List invoices | `GET` | `/v0/invoicesV2?subscriptionId={id}` |
+| Create payment | `POST` | `/v0/payments` |
+
+When generating code for a specific language, use the idiomatic HTTP client for that language and translate the JSON bodies above. Always include error handling and the `Authorization` header. When in doubt about an endpoint, check the [API reference](https://docs.paygentic.io/api-reference).
 
 ## Usage Metering (P0)
 
