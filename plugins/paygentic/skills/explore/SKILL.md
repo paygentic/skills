@@ -1,5 +1,5 @@
 ---
-name: paygentic-explore
+name: explore
 description: >
   Use when a developer wants to understand Paygentic, evaluate its billing and metering
   capabilities, or learn how usage-based billing works with Paygentic. Use this skill
@@ -27,7 +27,7 @@ Before explaining anything, ask:
 > 4. **Already integrated** — I need help with a specific operation
 
 - Options 1-2: Continue with this skill
-- Options 3-4: Switch to the `paygentic-integrate` skill instead
+- Options 3-4: Switch to the `integrate` skill instead
 
 If the developer's message already makes their stage obvious, skip the question and proceed.
 
@@ -133,4 +133,4 @@ Both are generated from the OpenAPI spec via Speakeasy and stay in sync with the
 
 ## Ready to Code?
 
-When the developer is ready to write integration code, point them to the `paygentic-integrate` skill. It will detect their SDK language, ask about their setup state, and generate working code.
+When the developer is ready to write integration code, point them to the `integrate` skill. It will detect their SDK language, ask about their setup state, and generate working code.

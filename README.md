@@ -8,8 +8,8 @@ Instead of reading docs and writing boilerplate, describe what you need in natur
 
 | Skill | What it does |
 |-------|-------------|
-| `paygentic-explore` | Explains Paygentic concepts — billing models, metering, entitlements, credit-based billing — so you can evaluate the platform and plan your integration without writing code |
-| `paygentic-integrate` | Generates working SDK code (TypeScript or Python) for usage metering, customer management, subscriptions, entitlements, invoices, and payments. Auto-detects your language from the project |
+| `explore` | Explains Paygentic concepts — billing models, metering, entitlements, credit-based billing — so you can evaluate the platform and plan your integration without writing code |
+| `integrate` | Generates working SDK code (TypeScript or Python) for usage metering, customer management, subscriptions, entitlements, invoices, and payments. Auto-detects your language from the project |
 
 ### Examples
 

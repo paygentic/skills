@@ -3,31 +3,31 @@
   "evals": [
     {
       "id": 1,
-      "skill": "paygentic-explore",
+      "skill": "explore",
       "prompt": "What is Paygentic? I'm building a SaaS product and need usage-based billing. Is this the right tool?",
       "expected_output": "Explains Paygentic as a consumption-based billing platform, describes the domain model (catalog vs runtime), mentions SDK availability, does NOT jump into code"
     },
     {
       "id": 2,
-      "skill": "paygentic-explore",
+      "skill": "explore",
       "prompt": "How does metering work in Paygentic? Like if I want to charge per API call, what's the flow?",
       "expected_output": "Explains billable metrics (dashboard), events.ingest() for sending usage (SDK), and how it ties to invoicing. Mentions fire-and-forget 202 response. Does NOT mention v0 usageEvents as the primary path"
     },
     {
       "id": 3,
-      "skill": "paygentic-integrate",
+      "skill": "integrate",
       "prompt": "I have @paygentic/sdk installed. I need to send usage events every time a user makes an API call in my Express app. Show me how.",
       "expected_output": "Uses events.ingest() (NOT usageEvents.create). Shows TypeScript code with type, source, subject, data fields. Mentions fire-and-forget 202 semantics. May suggest idempotencyKey for reliability"
     },
     {
       "id": 4,
-      "skill": "paygentic-integrate",
+      "skill": "integrate",
       "prompt": "I'm using Python and I need to check if a customer has access to the 'advanced-analytics' feature before showing them the page. How do I do this with Paygentic?",
       "expected_output": "Uses entitlements.list() with customer_id and feature_key='advanced-analytics'. Shows Python code with snake_case params. Checks if data has entries and optionally checks balance for metered features"
     },
     {
       "id": 5,
-      "skill": "paygentic-integrate",
+      "skill": "integrate",
       "prompt": "Set up Paygentic billing for my app. I need to create customers when they sign up and subscribe them to our Pro plan.",
       "expected_output": "Asks about SDK language if unclear from project. Shows customers.create() with consumer details and externalId, then subscriptions.create() with planId and customerId. Uses v1 patterns throughout"
     }

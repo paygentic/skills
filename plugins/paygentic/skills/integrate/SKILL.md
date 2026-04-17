@@ -1,5 +1,5 @@
 ---
-name: paygentic-integrate
+name: integrate
 description: >
   Use when a developer wants to integrate Paygentic into their application using
   the SDK or raw REST API. Use this skill whenever someone wants to send usage
