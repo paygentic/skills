@@ -24,19 +24,21 @@ Instead of reading docs and writing boilerplate, describe what you need in natur
 
 ```bash
 /plugin marketplace add paygentic/skills
-/plugin install paygentic@paygentic-skills
+/plugin install paygentic@skills
 ```
 
 ## Requirements
 
 - [Claude Code](https://claude.ai/code) CLI
 - Paygentic account with API key — sign up at [platform.paygentic.io](https://platform.paygentic.io)
-- One of the Paygentic SDKs:
+- A Paygentic SDK (optional — the skill also generates direct REST API calls for any language):
 
   | Language | Package | Install |
   |----------|---------|---------|
   | TypeScript | `@paygentic/sdk` | `npm install @paygentic/sdk` |
   | Python | `paygentic-sdk` | `pip install paygentic-sdk` |
+
+  For Go, Ruby, Java, or any other language, the `integrate` skill generates HTTP calls against the [REST API](https://docs.paygentic.io/api-reference) directly.
 
 ## Eval Results
 
@@ -53,8 +55,8 @@ Biggest impact: usage metering (eval 3) — without the skill, Claude defaults t
 ## Updating
 
 ```bash
-/plugin marketplace update paygentic-skills
-/plugin update paygentic@paygentic-skills
+/plugin marketplace update skills
+/plugin update paygentic@skills
 ```
 
 ## Resources
