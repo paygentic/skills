@@ -4,17 +4,17 @@ description: >
   Use when a developer wants to integrate Paygentic into their application using
   the SDK or raw REST API. Use this skill whenever someone wants to send usage
   events, create customers, manage subscriptions, check entitlements, retrieve
-  invoices, or set up payments with Paygentic. Works with any language — TypeScript
-  and Python via SDK, all other languages via direct HTTP API. Also use when someone
+  invoices, or set up payments with Paygentic. Works with any language — TypeScript,
+  Python, and Go via SDK, all other languages via direct HTTP API. Also use when someone
   says "set up billing", "add metering", "wire up Paygentic", "integrate Paygentic",
-  or has the @paygentic/sdk or paygentic-sdk package installed. Even if they just say
+  or has the @paygentic/sdk, paygentic-sdk, or github.com/paygentic/sdk-go package installed. Even if they just say
   "I want to bill my users" in a project that has Paygentic as a dependency, use
   this skill.
 ---
 
 # Paygentic Integrate
 
-Write integration code for merchant developers using the SDK (TypeScript, Python) or the raw REST API (any language). Detect their language, understand their setup state, and generate working code.
+Write integration code for merchant developers using the SDK (TypeScript, Python, Go) or the raw REST API (any language). Detect their language, understand their setup state, and generate working code.
 
 ## First: Understand the Developer's Context
 
@@ -28,7 +28,8 @@ Before writing any code, determine:
 2. **Language** — Check the project for signals:
    - `package.json` with `@paygentic/sdk` → TypeScript SDK
    - `requirements.txt` / `pyproject.toml` with `paygentic-sdk` → Python SDK
-   - Go, Java, Ruby, Rust, PHP, or any other language → **Raw HTTP API** (no SDK needed)
+   - `go.mod` with `github.com/paygentic/sdk-go` → Go SDK
+   - Java, Ruby, Rust, PHP, or any other language → **Raw HTTP API** (no SDK needed)
    - If unclear, ask which language they're using
 
 3. **What they want to do** — metering, customers, subscriptions, entitlements, invoices, or payments
@@ -46,7 +47,8 @@ If the developer's message already makes context obvious, skip questions and pro
 After determining the language:
 - TypeScript → read `references/typescript-sdk.md`
 - Python → read `references/python-sdk.md`
-- Any other language → use the **Raw API Integration** section below. Generate idiomatic HTTP code in the developer's language (e.g., `net/http` for Go, `HttpClient` for Java, `reqwest` for Rust, `guzzle`/`curl` for PHP).
+- Go → read `references/go-sdk.md`
+- Any other language → use the **Raw API Integration** section below. Generate idiomatic HTTP code in the developer's language (e.g., `HttpClient` for Java, `reqwest` for Rust, `guzzle`/`curl` for PHP).
 
 ## Debugging with the Live API
 
@@ -145,9 +147,35 @@ paygentic = Paygentic(
 
 Python supports both sync and async. Every method has an `_async` variant (e.g., `customers.create_async()`). Use `async with Paygentic(...) as paygentic:` for async context management.
 
+### Go
+```bash
+go get github.com/paygentic/sdk-go
+```
+```go
+import (
+    "os"
+
+    paygentic "github.com/paygentic/sdk-go"
+)
+
+// Sandbox (default for initial integration)
+client := paygentic.New(
+    paygentic.WithServerURL("https://api.sandbox.paygentic.io"),
+    paygentic.WithSecurity(os.Getenv("PAYGENTIC_BEARER_AUTH")),
+)
+
+// Production — switch when ready to go live:
+// client := paygentic.New(
+//     paygentic.WithServerURL("https://api.paygentic.io"),
+//     paygentic.WithSecurity(os.Getenv("PAYGENTIC_BEARER_AUTH")),
+// )
+```
+
+Every method takes `context.Context` as the first argument. See `references/go-sdk.md` for pointer helpers, time parsing, and full method signatures.
+
 ## Raw API Integration (No SDK)
 
-For languages without an SDK (Go, Java, Ruby, Rust, PHP, etc.), integrate directly with the REST API. The SDKs are thin wrappers — every SDK method maps 1:1 to an HTTP endpoint.
+For languages without an SDK (Java, Ruby, Rust, PHP, etc.), integrate directly with the REST API. The SDKs are thin wrappers — every SDK method maps 1:1 to an HTTP endpoint.
 
 ### Base URL & Auth
 
@@ -318,6 +346,20 @@ paygentic.events.ingest(
         "model": "gpt-4",
     },
 )
+```
+
+### Go
+```go
+_, err := client.Events.Ingest(ctx, operations.IngestEventRequest{
+    Type:    "api-call",                // matches a billable metric event type
+    Source:  "my-api-service",
+    Subject: "customer_abc123",
+    Data: map[string]any{
+        "tokens": 1500,
+        "model":  "gpt-4",
+    },
+})
+// Always returns 202 — fire-and-forget
 ```
 
 ### Querying Usage
