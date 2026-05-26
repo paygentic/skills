@@ -279,7 +279,7 @@ GET /v0/plans?merchantId=org_abc123
 
 ### Terminate a Subscription
 ```
-POST /v0/subscriptions/{id}/terminate
+POST /v0/subscriptions/{id}/termination
 ```
 ```json
 {
@@ -302,7 +302,7 @@ POST /v0/subscriptions/{id}/portal-link
 | Get customer | `GET` | `/v0/customers/{id}` |
 | List subscriptions | `GET` | `/v0/subscriptions?merchantId={id}` |
 | Create subscription | `POST` | `/v0/subscriptions` |
-| Terminate subscription | `POST` | `/v0/subscriptions/{id}/terminate` |
+| Terminate subscription | `POST` | `/v0/subscriptions/{id}/termination` |
 | Portal link | `POST` | `/v0/subscriptions/{id}/portal-link` |
 | List entitlements | `GET` | `/v1/entitlements?customerId={id}` |
 | List billable metrics | `GET` | `/v0/billableMetrics?merchantId={id}` |
