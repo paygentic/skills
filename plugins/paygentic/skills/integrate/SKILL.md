@@ -220,7 +220,7 @@ POST /v0/customers
       "line1": "123 Main St",
       "city": "San Francisco",
       "state": "CA",
-      "postalCode": "94105",
+      "zipCode": "94105",
       "country": "US"
     }
   },
@@ -391,7 +391,7 @@ const customer = await paygentic.customers.create({
       line1: "123 Main St",
       city: "San Francisco",
       state: "CA",
-      postalCode: "94105",
+      zipCode: "94105",
       country: "US",
     },
   },
