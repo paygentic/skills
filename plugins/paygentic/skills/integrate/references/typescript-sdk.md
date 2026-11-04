@@ -44,7 +44,7 @@ await paygentic.customers.create({
       line1: string,
       city: string,
       state: string,
-      postalCode: string,
+      zipCode: string,
       country: string,           // ISO 3166-1 alpha-2
     },
   },

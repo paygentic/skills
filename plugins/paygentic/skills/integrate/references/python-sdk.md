@@ -68,7 +68,7 @@ paygentic.customers.create(
             "line1": "123 Main St",
             "city": "San Francisco",
             "state": "CA",
-            "postal_code": "94105",
+            "zip_code": "94105",
             "country": "US",
         },
     },
