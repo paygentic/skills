@@ -317,7 +317,7 @@ When generating code for a specific language, use the idiomatic HTTP client for 
 
 The most common integration point. Merchants send meter events as customers use their product.
 
-**Endpoint:** `events.ingest()` — fire-and-forget. Always returns 202 Accepted. Uses CloudEvents format.
+**Endpoint:** `events.ingest()` — uses CloudEvents format, and Paygentic processes the event in the background. It returns `202 Accepted` for an event that is well-formed, names a customer with `subject` or `externalSubject`, and has a `type` that matches a billable metric or cost metric. A `type` that matches neither returns `422 invalid_event_type`. Send an `idempotencyKey` with every event you might retry, and retry a 5xx or 429 with the same key.
 
 **IMPORTANT:** Do NOT use `usageEvents.create()` or `usageEvents.batchCreate()` — those are v0-only and will error on v1 billing plans.
 
@@ -332,7 +332,7 @@ await paygentic.events.ingest({
     model: "gpt-4",                    // optional dimensions for grouping/filtering
   },
 });
-// Always returns 202 — no confirmation, fire-and-forget
+// 202 Accepted means queued, not yet counted. 422 if `type` matches no billable metric or cost metric
 ```
 
 ### Python
@@ -359,7 +359,7 @@ _, err := client.Events.Ingest(ctx, operations.IngestEventRequest{
         "model":  "gpt-4",
     },
 })
-// Always returns 202 — fire-and-forget
+// 202 Accepted means queued, not yet counted. 422 if Type matches no billable metric or cost metric
 ```
 
 ### Querying Usage
@@ -445,8 +445,33 @@ This combines metering + entitlements + grants into one flow.
 
 ### How it works
 
-1. **Dashboard**: Create a metered feature (e.g., `api-calls`) linked to a billable metric. Attach an entitlement template to the price with grant amount and reset period.
-2. **SDK**: On each request, check the entitlement balance → if credits remain, allow and ingest the event → Paygentic decrements the balance automatically.
+1. **Create a metered feature** (e.g., `api-calls`). A feature has no metric field, so it can't be linked to a billable metric directly.
+2. **Attach the feature to a price that measures a billable metric.** The price sets `billableMetricId`, and its `feature` object sets `featureId` and an `entitlementTemplate` with the grant amount (`issueAfterReset`) and reset period (`usagePeriod`). This price is what connects the allowance to the metric. Then add the price to a plan.
+3. **SDK**: On each request, check the entitlement balance → if credits remain, allow and ingest the event → the event counts against the balance once Paygentic has processed it.
+
+Usage counts against an allowance only from the entitlement's start or the moment Paygentic created it, whichever is later. Events dated earlier are metered but never draw down the allowance or bill overage, and nothing warns you. To build usage history for testing, use a test clock (see Common Mistakes).
+
+The price that links the allowance to the metric, sent to `POST /v0/prices`:
+
+```json
+{
+  "billableMetricId": "bm_xyz789",
+  "model": "standard",
+  "paymentTerm": "in_arrears",
+  "invoiceDisplayName": "API calls",
+  "properties": { "unitPrice": "0.002" },
+  "feature": {
+    "featureId": "feat_abc123",
+    "entitlementTemplate": {
+      "usagePeriod": { "interval": "P1M" },
+      "issueAfterReset": 10000,
+      "isSoftLimit": true
+    }
+  }
+}
+```
+
+With `isSoftLimit: true`, the customer keeps access past the allowance and only the usage above it is billed. With `false`, access stops at zero and nothing is billed.
 
 ### Check balance before allowing a request
 ```typescript
@@ -620,13 +645,13 @@ These are available in the SDK but covered lightly here. Ask if the developer ne
 
 - **Costs** — track infrastructure/operational costs against usage (`costs.createCost()`, `costs.getCostSummary()`)
 - **Sources** — connect external data sources for automated usage ingestion with approval workflow (`sources.create()`, `sources.events.approve()`, `sources.rules.create()`)
-- **Test Clocks** — simulate time for testing billing cycles (`testClocks.create()`, `testClocks.advance()`)
+- **Test Clocks** — simulate time for testing billing cycles and building usage history (`testClocks.create()`, `testClocks.advance()`). See https://docs.paygentic.io/getting-started/environments#simulating-time
 
 ## Common Mistakes
 
 1. **Using v0 usage endpoints with v1 plans** — `usageEvents.create()` and `usageEvents.batchCreate()` will return an error for v1 billing subscriptions. Always use `events.ingest()`.
 
-2. **Expecting confirmation from ingest** — `events.ingest()` always returns 202 Accepted with no validation. If the event type doesn't match a metric, it's silently ignored. Verify metric configuration in the dashboard — or better, make a direct API call to list billable metrics and confirm the event type matches.
+2. **Reading 202 as counted** — `202 Accepted` means the event is queued, not yet counted. An event `type` that matches no billable metric or cost metric returns `422`, so handle that error. To confirm usage landed, read `GET /v0/billableMetrics/{id}/meter` with the customer as `subject`.
 
 3. **Missing idempotency** — For critical metering, pass `idempotencyKey` to `events.ingest()` to prevent duplicate charges on retries.
 
@@ -634,7 +659,9 @@ These are available in the SDK but covered lightly here. Ask if the developer ne
 
 5. **Integrating directly against production** — Always develop and test against sandbox first (`api.sandbox.paygentic.io`). Moving to production is just changing the `serverURL` and API key — no code changes needed.
 
-6. **Guessing at IDs instead of verifying** — When events aren't showing up or subscriptions fail, don't guess. Hit the API directly (`curl` the billable metrics, plans, or customers endpoint) to verify the IDs and configuration are correct.
+6. **Backdating usage to build history** — Usage dated before an allowance starts is metered but never counts against the allowance, so the balance stays full and no overage is billed. In the sandbox, put the subscription on a test clock started in the past, send usage dated at the clock's current time, check the meter, then advance the clock. Wait for each period's invoice to appear before advancing again. See https://docs.paygentic.io/getting-started/environments#simulating-time
+
+7. **Guessing at IDs instead of verifying** — When events aren't showing up or subscriptions fail, don't guess. Hit the API directly (`curl` the billable metrics, plans, or customers endpoint) to verify the IDs and configuration are correct.
 
 ## Learn More
 
